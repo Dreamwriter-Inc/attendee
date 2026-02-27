@@ -161,14 +161,11 @@ STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Redis/Celery Configuration
-redis_params = {}
-if os.getenv("DISABLE_REDIS_SSL"):  # backward compatibility
-    redis_params["ssl_cert_reqs"] = "none"
-elif os.getenv("REDIS_SSL_REQUIREMENTS"):
-    redis_params["ssl_cert_reqs"] = os.getenv("REDIS_SSL_REQUIREMENTS")
-redis_params_query_string = "&".join([f"{key}={value}" for key, value in redis_params.items()])
-
-REDIS_URL_WITH_PARAMS = os.getenv("REDIS_URL") + ("?" + redis_params_query_string if redis_params_query_string else "")
+# ssl_cert_reqs is NOT added to the URL because redis-py and Celery expect
+# different formats (lowercase "none" vs "CERT_NONE"). Celery SSL is configured
+# in celery.py via broker_use_ssl / redis_backend_use_ssl. redis-py handles SSL
+# automatically via the rediss:// URL scheme.
+REDIS_URL_WITH_PARAMS = os.getenv("REDIS_URL")
 
 CELERY_BROKER_URL = REDIS_URL_WITH_PARAMS
 CELERY_RESULT_BACKEND = REDIS_URL_WITH_PARAMS
